@@ -3,40 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เครื่องมือคำนวณขนาดและราคา</title>
+<title>ใบสั่งงานพิมพ์</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  body {font-family:'Prompt',sans-serif;background:linear-gradient(135deg,#ff9800,#ffc107);margin:0;padding:10px;}
-  .container {max-width:500px;margin:auto;background:#fff;padding:15px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.2);} 
-  h2{text-align:center;font-size:18px;}
-
-  .form-group{margin-bottom:12px;}
-  label{font-size:13px;margin-bottom:4px;display:block;}
-
-  input,select{
-    width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;
-    font-size:15px;box-sizing:border-box;
-  }
-
-  .row{display:flex;gap:10px;}
-  .row>div{flex:1;}
-
-  button{width:100%;background:#ff9800;color:#fff;border:none;padding:12px;border-radius:10px;margin-top:8px;font-weight:600;font-size:15px;}
-
-  canvas{width:100%;margin-top:15px;border-radius:10px;border:1px solid #eee;}
-
-  .result{margin-top:8px;font-size:14px;}
+body{font-family:'Prompt',sans-serif;background:linear-gradient(135deg,#ff9800,#ffc107);margin:0;padding:10px;}
+.container{max-width:520px;margin:auto;background:#fff;padding:15px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.2);} 
+h2{text-align:center;font-size:18px;margin-bottom:10px;}
+.form-group{margin-bottom:12px;}
+label{font-size:13px;margin-bottom:4px;display:block;}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;font-size:15px;box-sizing:border-box;}
+.row{display:flex;gap:10px;}
+.row>div{flex:1;}
+.opt{
+  display:grid;
+  grid-template-columns: 30px 1fr 100px 40px;
+  align-items:center;
+  gap:6px;
+  background:#fff8e1;
+  padding:8px;
+  border-radius:8px;
+  margin-bottom:6px;
+}
+button{width:100%;background:#ff9800;color:#fff;border:none;padding:12px;border-radius:10px;margin-top:8px;font-weight:600;font-size:15px;}
+canvas{width:100%;margin-top:15px;border-radius:10px;border:1px solid #eee;}
 </style>
 </head>
 <body>
 <div class="container">
-<h2>คำนวณขนาด + ราคา</h2>
+<h2>ใบสั่งงานพิมพ์</h2>
 
 <div class="form-group">
-<label>ขนาด (กว้าง x สูง)</label>
+<label>ประเภทงานพิมพ์</label>
+<select id="material">
+<option>ไวนิล</option>
+<option>สติ๊กเกอร์</option>
+<option>กระดาษ</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>ขนาด</label>
 <div class="row">
-<div><input type="number" id="width" placeholder="กว้าง"></div>
-<div><input type="number" id="height" placeholder="สูง"></div>
+<input type="number" id="width" placeholder="กว้าง">
+<input type="number" id="height" placeholder="สูง">
 </div>
 </div>
 
@@ -51,131 +60,102 @@
 
 <div class="form-group">
 <label>ราคา / ตร.ม.</label>
-<input type="number" id="price" placeholder="บาท">
+<input type="number" id="price" value="150">
 </div>
 
-<button onclick="drawShape()">คำนวณ</button>
+<div class="form-group">
+<label>ตัวเลือกเสริม</label>
+<div style="color:green;font-size:13px;">🟢 มาตรฐาน: เจาะตาไก่ ฟรี</div>
+<div class="opt"><input type="checkbox" id="opt1"><span>โครงไม้</span><input type="number" id="p1"><span>บาท</span></div>
+<div class="opt"><input type="checkbox" id="opt2"><span>พิมพ์ 2 ด้าน</span><input type="number" id="p2"><span>บาท</span></div>
+<div class="opt"><input type="checkbox" id="opt3"><span>ธงญี่ปุ่น</span><input type="number" id="p3"><span>บาท</span></div>
+<div class="opt"><input type="checkbox" id="opt4"><span>ฐาน/โครงเหล็ก</span><input type="number" id="p4"><span>บาท</span></div>
+<div class="opt"><input type="checkbox" id="opt5"><span>เคลือบลามิเนต</span><input type="number" id="p5"><span>บาท</span></div>
+<div class="opt"><input type="checkbox" id="opt6"><span>บริการติดตั้ง</span><input type="number" id="p6"><span>บาท</span></div>
+</div>
+
+<button onclick="drawAll()">สร้างใบสั่งงาน</button>
 <button onclick="saveImage()">บันทึกเป็นรูป</button>
-<button onclick="shareLine()">แชร์เข้า LINE</button>
 
-<div class="result" id="area"></div>
-<div class="result" id="total"></div>
-
-<canvas id="canvas" width="600" height="400"></canvas>
+<canvas id="canvas" width="600" height="650"></canvas>
 </div>
 
 <script>
-function convertToMeters(value, unit) {
-  if (unit==='cm') return value/100;
-  if (unit==='mm') return value/1000;
-  return value;
-}
+function convert(v,u){if(u==='cm')return v/100;if(u==='mm')return v/1000;return v;}
 
-function drawGrid(ctx,w,h){
- ctx.strokeStyle='#eee';
- for(let x=0;x<w;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
- for(let y=0;y<h;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
-}
+function getExtras(){let sum=0,list=[];for(let i=1;i<=6;i++){let c=document.getElementById('opt'+i);let p=parseFloat(document.getElementById('p'+i).value)||0;if(c.checked){sum+=p;list.push(c.parentElement.innerText)}}return{sum,list}}
 
-function drawWatermark(ctx, canvas) {
-  ctx.save();
-  ctx.globalAlpha = 0.08;
-  ctx.fillStyle = '#000';
-  ctx.font = '20px Prompt';
+function watermark(ctx,c){ctx.save();ctx.globalAlpha=0.07;ctx.font='20px Prompt';ctx.translate(c.width/2,c.height/2);ctx.rotate(-Math.PI/4);for(let y=-c.height;y<c.height;y+=80){for(let x=-c.width;x<c.width;x+=200){ctx.fillText('Bhy printing',x,y)}}ctx.restore()}
 
-  ctx.translate(canvas.width/2, canvas.height/2);
-  ctx.rotate(-Math.PI / 4);
+function drawMeasure(ctx,w,h,x,y){ctx.fillStyle='rgba(255,152,0,0.6)';ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h)}
 
-  for (let y = -canvas.height; y < canvas.height; y += 80) {
-    for (let x = -canvas.width; x < canvas.width; x += 200) {
-      ctx.fillText('Oam snr', x, y);
-    }
-  }
+function drawAll(){
+const wIn=+document.getElementById('width').value;
+const hIn=+document.getElementById('height').value;
+const unitEl=document.getElementById('unit');
+const unitVal=unitEl.value;
+const priceVal=+document.getElementById('price').value;
+const materialVal=document.getElementById('material').value;
 
-  ctx.restore();
-}
+if(!wIn||!hIn)return alert('กรอกขนาด');
 
-function drawShape(){
- const wInput=parseFloat(width.value);
- const hInput=parseFloat(height.value);
- const priceVal=parseFloat(price.value);
- const unitVal=unit.value;
- if(!wInput||!hInput||!priceVal){alert('กรุณากรอกข้อมูลให้ครบ');return;}
+const w=convert(wIn,unitVal);
+const h=convert(hIn,unitVal);
+const area=w*h;
+const extra=getExtras();
+const total=area*priceVal+extra.sum;
 
- const w=convertToMeters(wInput,unitVal);
- const h=convertToMeters(hInput,unitVal);
+const c=document.getElementById('canvas');
+const ctx=c.getContext('2d');
+ctx.clearRect(0,0,c.width,c.height);
 
- const canvas=document.getElementById('canvas');
- const ctx=canvas.getContext('2d');
- ctx.clearRect(0,0,canvas.width,canvas.height);
+watermark(ctx,c);
 
- drawGrid(ctx,canvas.width,canvas.height);
- drawWatermark(ctx, canvas);
+ctx.fillStyle='#000';
+ctx.font='16px Prompt';
+ctx.fillText('ใบสั่งงานพิมพ์',20,30);
+ctx.font='14px Prompt';
+ctx.fillText('ประเภท: '+materialVal,20,60);
+ctx.fillText(`ขนาด: ${wIn} x ${hIn} ${unitVal}`,20,80);
+ctx.fillText('พื้นที่: '+area.toFixed(2)+' ตร.ม.',20,100);
 
- const scale=Math.min(400/w,250/h);
- const drawW=w*scale;
- const drawH=h*scale;
- const startX=(canvas.width-drawW)/2;
- const startY=(canvas.height-drawH)/2;
+// mockup
+const scale=200/Math.max(w,h);
+const dw=w*scale,dh=h*scale;
+drawMeasure(ctx,dw,dh,200,120);
 
- ctx.fillStyle='rgba(255,152,0,0.6)';
- ctx.fillRect(startX,startY,drawW,drawH);
- ctx.strokeStyle='#ff9800';ctx.lineWidth=2;
- ctx.strokeRect(startX,startY,drawW,drawH);
+// options
+let y=350;
+ctx.fillText('รายการ:',20,y);
+y+=20;
+if(extra.list.length===0){ctx.fillText('- เจาะตาไก่ (ฟรี)',30,y);} 
+else extra.list.forEach(i=>{ctx.fillText('- '+i,30,y);y+=20});
 
- const area=w*h;
- const total=area*priceVal;
+ctx.font='bold 18px Prompt';
+ctx.fillText('รวม '+total.toLocaleString()+' บาท',20,600);
 
- ctx.fillStyle='#000';ctx.font='14px Prompt';
+// signature line
+ctx.beginPath();
+ctx.moveTo(380,550);
+ctx.lineTo(580,550);
+ctx.stroke();
 
- // เส้นวัดกว้าง + tick
- ctx.beginPath();
- ctx.moveTo(startX, startY + drawH + 20);
- ctx.lineTo(startX + drawW, startY + drawH + 20);
- ctx.stroke();
- for (let i = 0; i <= 10; i++) {
-   let x = startX + (drawW/10)*i;
-   ctx.beginPath();
-   ctx.moveTo(x, startY + drawH + 15);
-   ctx.lineTo(x, startY + drawH + 25);
-   ctx.stroke();
- }
- ctx.fillText(wInput + ' ' + unitVal,startX + drawW/2 - 30,startY + drawH + 40);
-
- // เส้นวัดสูง + tick
- ctx.beginPath();
- ctx.moveTo(startX - 20, startY);
- ctx.lineTo(startX - 20, startY + drawH);
- ctx.stroke();
- for (let i = 0; i <= 10; i++) {
-   let y = startY + (drawH/10)*i;
-   ctx.beginPath();
-   ctx.moveTo(startX - 25, y);
-   ctx.lineTo(startX - 15, y);
-   ctx.stroke();
- }
- ctx.fillText(hInput + ' ' + unitVal,startX - 70,startY + drawH/2);
-
- ctx.font='bold 16px Prompt';
- ctx.fillText('รวม '+total.toLocaleString()+' บาท',20,30);
-
- document.getElementById('area').innerText='พื้นที่: '+area.toFixed(2)+' ตร.ม.';
- document.getElementById('total').innerText='ราคารวม: '+total.toLocaleString()+' บาท';
+// signature image
+const img=new Image();
+img.onload=function(){
+ ctx.drawImage(img,400,500,150,60);
+ ctx.font='12px Prompt';
+ ctx.fillText('(นายศักดิ์นรินทร์ คำใจ)',400,570);
+};
+img.src='https://drive.google.com/uc?export=view&id=1LpDb5IALTMouQOukaOg9_IKzu8J8_iis';
 }
 
 function saveImage(){
- const canvas=document.getElementById('canvas');
- const link=document.createElement('a');
- link.download='measurement.png';
- link.href=canvas.toDataURL();
- link.click();
-}
-
-function shareLine(){
- const canvas=document.getElementById('canvas');
- const url=canvas.toDataURL();
- const lineUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(url);
- window.open(lineUrl,'_blank');
+const c=document.getElementById('canvas');
+const a=document.createElement('a');
+a.href=c.toDataURL();
+a.download='order.png';
+a.click();
 }
 </script>
 </body>
