@@ -22,7 +22,6 @@ input, select {
 input::placeholder { color: #ccc; font-weight: 300; }
 input:focus { border-color: var(--accent-color); background: #fff; }
 
-/* คลาสพิเศษสำหรับช่องที่ลืมกรอก */
 input.invalid {
   background-color: var(--error-bg) !important;
   border-color: var(--error-border) !important;
@@ -93,10 +92,11 @@ canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; border-r
 <script>
 let selectedMaterial = "ไวนิล";
 
+// เมื่อกรอกตัวเลข -> ติ๊กถูกอัตโนมัติ
 function autoCheck(el) {
   const parent = el.closest('.opt');
   const checkbox = parent.querySelector('input[type="checkbox"]');
-  if (parseFloat(el.value) > 0) {
+  if (el.value !== "" && parseFloat(el.value) > 0) {
     checkbox.checked = true;
     parent.classList.add('active');
   } else {
@@ -106,17 +106,28 @@ function autoCheck(el) {
   drawAll();
 }
 
+// เมื่อติ๊กออก -> ล้างข้อมูลตัวเลข
+function toggleOpt(el) { 
+  const cb = el.querySelector('input[type="checkbox"]'); 
+  const input = el.querySelector('input[type="number"]');
+  
+  if (event.target !== cb) {
+    cb.checked = !cb.checked;
+  }
+  
+  if (cb.checked) {
+    el.classList.add('active');
+  } else {
+    el.classList.remove('active');
+    input.value = ""; // ล้างข้อมูลเมื่อติ๊กออก
+  }
+  drawAll(); 
+}
+
 function setMaterial(el, val) { 
   document.querySelectorAll('.material-btn').forEach(btn => btn.classList.remove('active')); 
   el.classList.add('active'); 
   selectedMaterial = val; 
-  drawAll(); 
-}
-
-function toggleOpt(el) { 
-  const cb = el.querySelector('input[type="checkbox"]'); 
-  if (event.target !== cb) cb.checked = !cb.checked; 
-  cb.checked ? el.classList.add('active') : el.classList.remove('active'); 
   drawAll(); 
 }
 
@@ -149,17 +160,10 @@ function drawMeasure(ctx, w, h, x, y, realW, realH, unit) {
 function drawAll() {
   const wEl = document.getElementById('width');
   const hEl = document.getElementById('height');
+  if (!wEl.value || !hEl.value) return;
+
   const wIn = wEl.value;
   const hIn = hEl.value;
-
-  // Validation Check
-  if (!wIn || !hIn || wIn <= 0 || hIn <= 0) {
-    if (!wIn || wIn <= 0) wEl.classList.add('invalid');
-    if (!hIn || hIn <= 0) hEl.classList.add('invalid');
-    alert("กรุณากรอกขนาดให้ถูกต้อง");
-    return;
-  }
-
   const unitVal = document.getElementById('unit').value;
   const priceVal = +document.getElementById('price').value;
   const shipVal = +document.getElementById('shipping').value || 0;
@@ -229,6 +233,14 @@ function drawAll() {
 }
 
 function downloadImage() {
+  const wEl = document.getElementById('width');
+  const hEl = document.getElementById('height');
+  if (!wEl.value || !hEl.value) {
+    if (!wEl.value) wEl.classList.add('invalid');
+    if (!hEl.value) hEl.classList.add('invalid');
+    alert("กรุณากรอกขนาดให้ถูกต้อง");
+    return;
+  }
   const link = document.createElement('a');
   link.download = `Bhy-printing-quote.png`;
   link.href = canvas.toDataURL('image/png');
@@ -237,4 +249,5 @@ function downloadImage() {
 </script>
 </body>
 </html>
+
 
