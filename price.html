@@ -6,7 +6,7 @@
 <title>ใบแจ้งราคา - Bhy printing</title>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-:root { --primary-color: #2d3436; --accent-color: #e67e22; --bg-color: #f8f9fa; --card-bg: #ffffff; --text-main: #2d3436; --text-sub: #636e72; }
+:root { --primary-color: #2d3436; --accent-color: #e67e22; --bg-color: #f8f9fa; --card-bg: #ffffff; --text-main: #2d3436; --text-sub: #636e72; --error-bg: #fff5f5; --error-border: #ff7675; }
 body { font-family: 'Prompt', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: var(--text-main); }
 .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
 h2 { text-align: center; margin-top: 0; color: var(--primary-color); font-weight: 600; font-size: 22px; }
@@ -14,14 +14,19 @@ h2 { text-align: center; margin-top: 0; color: var(--primary-color); font-weight
 .form-group { margin-bottom: 15px; }
 label { display: block; font-size: 12px; margin-bottom: 5px; color: var(--text-sub); }
 
-/* ปรับสไตล์ Input ให้ดู Thin และจางลงตามโจทย์ */
 input, select { 
   width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #eee; 
   font-family: 'Prompt', sans-serif; font-size: 14px; box-sizing: border-box; 
   outline: none; transition: 0.3s; background: #fafafa;
 }
-input::placeholder { color: #ccc; font-weight: 300; } /* สีเทาจางๆ */
+input::placeholder { color: #ccc; font-weight: 300; }
 input:focus { border-color: var(--accent-color); background: #fff; }
+
+/* คลาสพิเศษสำหรับช่องที่ลืมกรอก */
+input.invalid {
+  background-color: var(--error-bg) !important;
+  border-color: var(--error-border) !important;
+}
 
 .row { display: flex; gap: 10px; }
 .material-group { display: flex; gap: 8px; margin-bottom: 15px; }
@@ -54,16 +59,19 @@ canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; border-r
   <div class="section-title">ขนาดและราคา</div>
   <div class="form-group">
     <div class="row">
-      <div style="flex:2"><label>กว้าง x สูง</label><div class="row"><input type="number" id="width" placeholder="กว้าง"><input type="number" id="height" placeholder="สูง"></div></div>
+      <div style="flex:2">
+        <label>กว้าง x สูง</label>
+        <div class="row">
+          <input type="number" id="width" placeholder="กว้าง" oninput="this.classList.remove('invalid')">
+          <input type="number" id="height" placeholder="สูง" oninput="this.classList.remove('invalid')">
+        </div>
+      </div>
       <div style="flex:1"><label>หน่วย</label><select id="unit"><option value="m">เมตร (m)</option><option value="cm">ซม. (cm)</option><option value="mm">มม. (mm)</option></select></div>
     </div>
   </div>
   <div class="row">
     <div class="form-group" style="flex:1"><label>ราคา/ตร.ม.</label><input type="number" id="price" value="150"></div>
-    <div class="form-group" style="flex:1">
-        <label>ค่าจัดส่ง</label>
-        <input type="number" id="shipping" placeholder="ฟรี">
-    </div>
+    <div class="form-group" style="flex:1"><label>ค่าจัดส่ง</label><input type="number" id="shipping" placeholder="ฟรี"></div>
   </div>
   <div class="section-title">ตัวเลือกเพิ่มเติม</div>
   <div class="options-list">
@@ -88,8 +96,7 @@ let selectedMaterial = "ไวนิล";
 function autoCheck(el) {
   const parent = el.closest('.opt');
   const checkbox = parent.querySelector('input[type="checkbox"]');
-  const val = parseFloat(el.value);
-  if (val > 0) {
+  if (parseFloat(el.value) > 0) {
     checkbox.checked = true;
     parent.classList.add('active');
   } else {
@@ -140,9 +147,18 @@ function drawMeasure(ctx, w, h, x, y, realW, realH, unit) {
 }
 
 function drawAll() {
-  const wIn = +document.getElementById('width').value;
-  const hIn = +document.getElementById('height').value;
-  if (!wIn || !hIn) return;
+  const wEl = document.getElementById('width');
+  const hEl = document.getElementById('height');
+  const wIn = wEl.value;
+  const hIn = hEl.value;
+
+  // Validation Check
+  if (!wIn || !hIn || wIn <= 0 || hIn <= 0) {
+    if (!wIn || wIn <= 0) wEl.classList.add('invalid');
+    if (!hIn || hIn <= 0) hEl.classList.add('invalid');
+    alert("กรุณากรอกขนาดให้ถูกต้อง");
+    return;
+  }
 
   const unitVal = document.getElementById('unit').value;
   const priceVal = +document.getElementById('price').value;
@@ -221,3 +237,4 @@ function downloadImage() {
 </script>
 </body>
 </html>
+
