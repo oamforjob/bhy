@@ -21,33 +21,17 @@ body{
  border-radius:14px;
  box-shadow:0 8px 20px rgba(0,0,0,0.2);
 }
-h2{text-align:center;font-size:22px;font-weight:bold;}
+h2{text-align:center;font-weight:bold;}
 
-.form-group{margin-bottom:12px;}
-label{font-size:13px;display:block;margin-bottom:4px;}
 input,select{
  width:100%;
- padding:12px;
- border-radius:10px;
+ padding:10px;
+ border-radius:8px;
  border:1px solid #ddd;
- font-size:15px;
- box-sizing:border-box;
+ margin-bottom:8px;
 }
 
 .row{display:flex;gap:10px;}
-
-.opt{
- display:grid;
- grid-template-columns:30px 1fr 100px 40px;
- align-items:center;
- gap:6px;
- background:#fff8e1;
- padding:8px;
- border-radius:8px;
- margin-bottom:6px;
- border-bottom:1px solid #ddd;
-}
-.opt.active{background:#ffe082;}
 
 button{
  width:100%;
@@ -56,32 +40,13 @@ button{
  border:none;
  padding:12px;
  border-radius:10px;
- margin-top:8px;
- font-weight:600;
 }
 
 canvas{
  width:100%;
- margin-top:15px;
+ margin-top:10px;
  border-radius:10px;
  border:1px solid #eee;
-}
-
-/* ===== ERROR STYLE ===== */
-.input-error{
- border:2px solid #ff3b30 !important;
- background:#fff0f0;
-}
-
-@keyframes shake{
- 0%{transform:translateX(0);}
- 25%{transform:translateX(-5px);}
- 50%{transform:translateX(5px);}
- 75%{transform:translateX(-5px);}
- 100%{transform:translateX(0);}
-}
-.shake{
- animation:shake 0.3s;
 }
 </style>
 </head>
@@ -91,168 +56,127 @@ canvas{
 
 <h2>ใบแจ้งราคา</h2>
 
-<div class="form-group">
-<label>ขนาด</label>
 <div class="row">
 <input type="number" id="width" placeholder="กว้าง">
 <input type="number" id="height" placeholder="สูง">
 </div>
-</div>
 
-<div class="form-group">
-<label>หน่วย</label>
 <select id="unit">
 <option value="m">เมตร</option>
-<option value="cm">เซนติเมตร</option>
-<option value="mm">มิลลิเมตร</option>
+<option value="cm">cm</option>
+<option value="mm">mm</option>
 </select>
-</div>
 
-<div class="form-group">
-<label>ราคา / ตร.ม.</label>
 <input type="number" id="price" value="150">
-</div>
-
-<div class="form-group">
-<label>รายการเสริม</label>
-<div style="color:green;font-size:13px;">🟢 เจาะตาไก่ ฟรี</div>
-
-<div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt1"><span>โครงไม้</span><input type="number" id="p1"><span>บาท</span></div>
-<div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt2"><span>พิมพ์ 2 ด้าน</span><input type="number" id="p2"><span>บาท</span></div>
-<div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt3"><span>ธงญี่ปุ่น</span><input type="number" id="p3"><span>บาท</span></div>
-<div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt4"><span>ฐาน/โครงเหล็ก</span><input type="number" id="p4"><span>บาท</span></div>
-<div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt5"><span>เคลือบลามิเนต</span><input type="number" id="p5"><span>บาท</span></div>
-<div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt6"><span>บริการติดตั้ง</span><input type="number" id="p6"><span>บาท</span></div>
-</div>
-
-<div class="form-group">
-<label>ค่าส่ง</label>
-<input type="number" id="shipping" placeholder="0">
-</div>
-
-<div class="form-group">
-<label>ส่วนลด</label>
-<input type="number" id="discount" placeholder="0">
-</div>
 
 <button onclick="drawAll()">สร้างภาพ</button>
 
-<canvas id="canvas" width="600" height="650"></canvas>
+<canvas id="canvas" width="600" height="800"></canvas>
 
 </div>
 
 <script>
 
-// ===== POPUP =====
-function showPopup(msg){
- const div=document.createElement('div');
- div.innerText=msg;
- div.style.position='fixed';
- div.style.top='50%';
- div.style.left='50%';
- div.style.transform='translate(-50%,-50%)';
- div.style.background='#ff9800';
- div.style.color='#fff';
- div.style.padding='15px 20px';
- div.style.borderRadius='10px';
- div.style.zIndex='9999';
- document.body.appendChild(div);
- setTimeout(()=>div.remove(),2000);
-}
-
-// ===== ERROR =====
-function showInputError(input){
- input.classList.add('input-error','shake');
- setTimeout(()=>input.classList.remove('shake'),300);
-}
-function clearInputError(input){
- input.classList.remove('input-error');
-}
-
-// ===== CORE =====
 function convert(v,u){
  if(u==='cm')return v/100;
  if(u==='mm')return v/1000;
  return v;
 }
 
-function getExtras(){
- let sum=0;
- let list=[];
+// ===== วาดลูกศร =====
+function drawArrow(ctx,x1,y1,x2,y2){
+ const head=8;
+ const angle=Math.atan2(y2-y1,x2-x1);
 
- for(let i=1;i<=6;i++){
-  let c=document.getElementById('opt'+i);
-  let name=c.parentElement.children[1].innerText;
-  let p=parseFloat(document.getElementById('p'+i).value)||0;
+ ctx.beginPath();
+ ctx.moveTo(x1,y1);
+ ctx.lineTo(x2,y2);
+ ctx.stroke();
 
-  if(c.checked){
-   sum+=p;
-   list.push(name+' '+p+' บาท');
+ // หัวลูกศรปลาย
+ ctx.beginPath();
+ ctx.moveTo(x2,y2);
+ ctx.lineTo(x2-head*Math.cos(angle-Math.PI/6),y2-head*Math.sin(angle-Math.PI/6));
+ ctx.lineTo(x2-head*Math.cos(angle+Math.PI/6),y2-head*Math.sin(angle+Math.PI/6));
+ ctx.closePath();
+ ctx.fill();
+
+ // หัวลูกศรต้น
+ ctx.beginPath();
+ ctx.moveTo(x1,y1);
+ ctx.lineTo(x1+head*Math.cos(angle-Math.PI/6),y1+head*Math.sin(angle-Math.PI/6));
+ ctx.lineTo(x1+head*Math.cos(angle+Math.PI/6),y1+head*Math.sin(angle+Math.PI/6));
+ ctx.closePath();
+ ctx.fill();
+}
+
+// ===== dimension จริง =====
+function drawDimension(ctx,x,y,w,h,textW,textH){
+
+ ctx.strokeStyle='#000';
+ ctx.fillStyle='#000';
+ ctx.font='12px Prompt';
+ ctx.textAlign='center';
+
+ // เส้นล่าง
+ let offset=25;
+ drawArrow(ctx,x,y+h+offset,x+w,y+h+offset);
+ ctx.fillText(textW,x+w/2,y+h+offset+15);
+
+ // เส้นข้าง
+ drawArrow(ctx,x-offset,y,x-offset,y+h);
+
+ ctx.save();
+ ctx.translate(x-offset-10,y+h/2);
+ ctx.rotate(-Math.PI/2);
+ ctx.fillText(textH,0,0);
+ ctx.restore();
+}
+
+// ===== ลายน้ำ =====
+function drawWatermark(ctx){
+ ctx.save();
+ ctx.globalAlpha=0.08;
+ ctx.font='bold 40px Prompt';
+ ctx.fillStyle='#000';
+
+ for(let y=0;y<800;y+=150){
+  for(let x=0;x<600;x+=200){
+   ctx.save();
+   ctx.translate(x,y);
+   ctx.rotate(-Math.PI/4);
+   ctx.fillText('ohm snr',0,0);
+   ctx.restore();
   }
  }
 
- if(list.length===0){
-  list.push('เจาะตาไก่ ฟรี');
- }
-
- return {sum,list};
-}
-
-function toggleOpt(el){
- const checkbox=el.querySelector('input[type=checkbox]');
- checkbox.checked=!checkbox.checked;
- el.classList.toggle('active',checkbox.checked);
-}
-
-function drawMeasure(ctx,w,h,x,y,realW,realH,unit){
- ctx.fillStyle='rgba(255,152,0,0.6)';
- ctx.fillRect(x,y,w,h);
- ctx.strokeRect(x,y,w,h);
-
- ctx.textAlign='center';
- ctx.fillStyle='#000';
- ctx.fillText(realW+' '+unit,x+w/2,y+h+30);
-
- ctx.save();
- ctx.translate(x-30,y+h/2);
- ctx.rotate(-Math.PI/2);
- ctx.fillText(realH+' '+unit,0,0);
  ctx.restore();
 }
 
 function drawAll(){
- const wInput=width;
- const hInput=height;
+ let wIn=+width.value;
+ let hIn=+height.value;
 
- const wIn=+wInput.value;
- const hIn=+hInput.value;
-
- clearInputError(wInput);
- clearInputError(hInput);
-
- if(!wIn || !hIn || wIn<=0 || hIn<=0){
-  if(!wIn || wIn<=0) showInputError(wInput);
-  if(!hIn || hIn<=0) showInputError(hInput);
-
-  showPopup('กรุณากรอกขนาดให้ถูกต้อง');
+ if(!wIn||!hIn){
+  alert('กรุณากรอกขนาดให้ถูกต้อง');
   return;
  }
 
- const unitVal=unit.value;
- const priceVal=+price.value;
- const shippingVal=+shipping.value||0;
- const discountVal=+discount.value||0;
+ let unitVal=unit.value;
+ let priceVal=+price.value;
 
- const w=convert(wIn,unitVal);
- const h=convert(hIn,unitVal);
- const area=w*h;
+ let w=convert(wIn,unitVal);
+ let h=convert(hIn,unitVal);
+ let area=w*h;
+ let total=area*priceVal;
 
- const extraData=getExtras();
- const total=(area*priceVal)+extraData.sum+shippingVal-discountVal;
+ let ctx=canvas.getContext('2d');
+ ctx.clearRect(0,0,600,800);
 
- const ctx=canvas.getContext('2d');
- ctx.clearRect(0,0,600,650);
+ // ลายน้ำ
+ drawWatermark(ctx);
 
+ // title
  ctx.textAlign='center';
  ctx.font='bold 22px Prompt';
  ctx.fillText('ใบแจ้งราคา',300,30);
@@ -260,32 +184,39 @@ function drawAll(){
  ctx.textAlign='left';
  ctx.fillText(`ขนาด: ${wIn} x ${hIn} ${unitVal}`,20,70);
 
- const scale=200/Math.max(w,h);
- drawMeasure(ctx,w*scale,h*scale,200,120,wIn,hIn,unitVal);
+ // โมเดล
+ let scale=200/Math.max(w,h);
+ let rw=w*scale, rh=h*scale;
 
- // ===== สรุป =====
- let x=20,y=350;
- ctx.strokeRect(x,y,260,200);
+ let x=200,y=120;
 
- ctx.fillText('สรุปรายการ',x+10,y+25);
- ctx.fillText('ราคางาน: '+(area*priceVal).toLocaleString(),x+10,y+60);
+ ctx.fillStyle='#ffb74d';
+ ctx.fillRect(x,y,rw,rh);
+ ctx.strokeRect(x,y,rw,rh);
 
- ctx.fillText('บริการเสริม:',x+10,y+85);
- let ey=y+105;
- extraData.list.forEach(item=>{
-  ctx.fillText('- '+item,x+10,ey);
-  ey+=18;
- });
+ // dimension
+ drawDimension(ctx,x,y,rw,rh,
+  wIn+' '+unitVal,
+  hIn+' '+unitVal
+ );
 
- ctx.fillText('ค่าส่ง: '+shippingVal.toLocaleString(),x+10,ey+10);
- ctx.fillText('ส่วนลด: -'+discountVal.toLocaleString(),x+10,ey+30);
+ // ===== summary 2 column =====
+ let sx=20, sy=420;
+ ctx.strokeRect(sx,sy,560,150);
 
- ctx.textAlign='center';
- ctx.font='bold 20px Prompt';
- ctx.fillText('ยอดสุทธิ',x+130,ey+70);
+ ctx.font='14px Prompt';
 
- ctx.font='bold 24px Prompt';
- ctx.fillText(total.toLocaleString()+' บาท',x+130,ey+100);
+ ctx.fillText('รายละเอียด',sx+10,sy+25);
+ ctx.fillText('ราคา/ตร.ม.',sx+300,sy+25);
+
+ ctx.fillText('พื้นที่ '+area.toFixed(2),sx+10,sy+55);
+ ctx.fillText(priceVal,sx+300,sy+55);
+
+ ctx.fillText('รวม',sx+10,sy+100);
+
+ ctx.textAlign='right';
+ ctx.font='bold 22px Prompt';
+ ctx.fillText(total.toLocaleString()+' บาท',sx+540,sy+100);
 }
 
 </script>
