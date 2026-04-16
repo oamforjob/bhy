@@ -34,12 +34,7 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-h2 {
-  text-align: center;
-  margin-top: 0;
-  color: var(--primary-color);
-  font-weight: 600;
-}
+h2 { text-align: center; margin-top: 0; color: var(--primary-color); font-weight: 600; }
 
 .section-title {
   font-size: 14px;
@@ -52,13 +47,7 @@ h2 {
 }
 
 .form-group { margin-bottom: 15px; }
-
-label {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 5px;
-  color: var(--text-sub);
-}
+label { display: block; font-size: 13px; margin-bottom: 5px; color: var(--text-sub); }
 
 input, select {
   width: 100%;
@@ -72,98 +61,67 @@ input, select {
 
 .row { display: flex; gap: 10px; }
 
-/* Material Options & Additional Grid */
-.material-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
+/* Material Selector */
+.material-group { display: flex; gap: 10px; margin-bottom: 15px; }
 .material-btn {
-  flex: 1;
-  padding: 10px;
-  text-align: center;
-  background: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s;
+  flex: 1; padding: 10px; text-align: center; background: #f8f9fa;
+  border: 1px solid #eee; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s;
 }
+.material-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
 
-.material-btn.active {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
+/* ปรับปรุง Options Grid ให้คอลัมน์เสมอกัน */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
 }
 
 .opt {
-  display: flex;
+  display: grid;
+  grid-template-columns: 25px 1fr 65px; /* ติ๊ก | ชื่อ | ราคา */
   align-items: center;
   background: #f8f9fa;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #eee;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .opt.active { background: rgba(230, 126, 34, 0.08); border-color: var(--accent-color); }
 
-.opt input[type="checkbox"] { margin-right: 8px; }
+.opt span { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .opt input[type="number"] {
-  width: 60px;
-  padding: 4px;
-  margin-left: auto;
+  height: 28px;
+  padding: 2px 5px;
   font-size: 12px;
   text-align: right;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 /* Action Buttons */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 25px;
-}
-
+.button-group { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; }
 button.main-btn {
-  width: 100%;
-  cursor: pointer;
-  padding: 12px;
-  border-radius: 12px;
-  font-family: 'Prompt', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  border: none;
+  width: 100%; cursor: pointer; padding: 12px; border-radius: 12px;
+  font-family: 'Prompt', sans-serif; font-size: 16px; font-weight: 600; border: none;
 }
-
 .btn-generate { background: var(--primary-color); color: #fff; }
 .btn-download { background: transparent; color: var(--primary-color); border: 2px solid var(--primary-color) !important; }
 
 #canvas-wrapper {
-  margin-top: 25px;
-  background: #fdfdfd;
-  padding: 10px;
-  border-radius: 15px;
-  border: 1px dashed #ccc;
-  overflow: hidden;
+  margin-top: 25px; background: #fdfdfd; padding: 10px;
+  border-radius: 15px; border: 1px dashed #ccc;
 }
-
-canvas { max-width: 100%; height: auto; display: block; }
+canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <h2>ใบสรุปราคา</h2>
+  <h2>ใบแจ้งราคา OHM SNR</h2>
   
   <div class="section-title">1. ประเภทวัสดุ</div>
   <div class="material-group" id="materialGroup">
@@ -172,7 +130,7 @@ canvas { max-width: 100%; height: auto; display: block; }
     <div class="material-btn" onclick="setMaterial(this, 'กระดาษ')">กระดาษ</div>
   </div>
 
-  <div class="section-title">2. ขนาดและหน่วย</div>
+  <div class="section-title">2. ขนาดและราคา</div>
   <div class="form-group">
     <div class="row">
       <div style="flex:2">
@@ -186,21 +144,20 @@ canvas { max-width: 100%; height: auto; display: block; }
         <label>หน่วย</label>
         <select id="unit">
           <option value="m">เมตร (m)</option>
-          <option value="cm">เซนติเมตร (cm)</option>
-          <option value="mm">มิลลิเมตร (mm)</option>
+          <option value="cm">ซม. (cm)</option>
+          <option value="mm">มม. (mm)</option>
         </select>
       </div>
     </div>
   </div>
 
-  <div class="section-title">3. ราคาและส่วนลด</div>
   <div class="row">
     <div class="form-group" style="flex:1">
       <label>ราคา/ตร.ม.</label>
       <input type="number" id="price" value="150">
     </div>
     <div class="form-group" style="flex:1">
-      <label>ค่าส่ง</label>
+      <label>ค่าส่ง (0 = ฟรี)</label>
       <input type="number" id="shipping" value="0">
     </div>
     <div class="form-group" style="flex:1">
@@ -209,14 +166,32 @@ canvas { max-width: 100%; height: auto; display: block; }
     </div>
   </div>
 
-  <div class="section-title">4. ตัวเลือกเพิ่มเติม</div>
+  <div class="section-title">3. ตัวเลือกเพิ่มเติม</div>
   <div class="options-grid">
-    <div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt1"> <span>โครงไม้</span> <input type="number" id="p1" value="0" onclick="event.stopPropagation()"></div>
-    <div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt2"> <span>พิมพ์ 2 ด้าน</span> <input type="number" id="p2" value="0" onclick="event.stopPropagation()"></div>
-    <div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt3"> <span>ธงญี่ปุ่น</span> <input type="number" id="p3" value="0" onclick="event.stopPropagation()"></div>
-    <div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt4"> <span>โครงเหล็ก</span> <input type="number" id="p4" value="0" onclick="event.stopPropagation()"></div>
-    <div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt5"> <span>เคลือบเงา</span> <input type="number" id="p5" value="0" onclick="event.stopPropagation()"></div>
-    <div class="opt" onclick="toggleOpt(this)"><input type="checkbox" id="opt6"> <span>ติดตั้ง</span> <input type="number" id="p6" value="0" onclick="event.stopPropagation()"></div>
+    <div class="opt active" onclick="toggleOpt(this)">
+      <input type="checkbox" id="opt1" checked> <span>เจาะตาไก่ฟรี</span> 
+      <input type="number" id="p1" value="0" onclick="event.stopPropagation()">
+    </div>
+    <div class="opt" onclick="toggleOpt(this)">
+      <input type="checkbox" id="opt2"> <span>พิมพ์ 2 ด้าน</span> 
+      <input type="number" id="p2" value="0" onclick="event.stopPropagation()">
+    </div>
+    <div class="opt" onclick="toggleOpt(this)">
+      <input type="checkbox" id="opt3"> <span>ธงญี่ปุ่น</span> 
+      <input type="number" id="p3" value="0" onclick="event.stopPropagation()">
+    </div>
+    <div class="opt" onclick="toggleOpt(this)">
+      <input type="checkbox" id="opt4"> <span>โครงเหล็ก</span> 
+      <input type="number" id="p4" value="0" onclick="event.stopPropagation()">
+    </div>
+    <div class="opt" onclick="toggleOpt(this)">
+      <input type="checkbox" id="opt5"> <span>เคลือบเงา</span> 
+      <input type="number" id="p5" value="0" onclick="event.stopPropagation()">
+    </div>
+    <div class="opt" onclick="toggleOpt(this)">
+      <input type="checkbox" id="opt6"> <span>ติดตั้ง</span> 
+      <input type="number" id="p6" value="0" onclick="event.stopPropagation()">
+    </div>
   </div>
 
   <div class="button-group">
@@ -225,7 +200,7 @@ canvas { max-width: 100%; height: auto; display: block; }
   </div>
 
   <div id="canvas-wrapper">
-    <canvas id="canvas" width="600" height="780"></canvas>
+    <canvas id="canvas" width="600" height="800"></canvas>
   </div>
 </div>
 
@@ -246,14 +221,12 @@ function toggleOpt(el) {
   drawAll();
 }
 
-// ลายน้ำเฉียง 45 องศา เต็มจอ
 function drawWatermark(ctx) {
   ctx.save();
   ctx.globalAlpha = 0.06;
   ctx.font = 'bold 30px Prompt';
   ctx.fillStyle = '#000';
   ctx.rotate(-45 * Math.PI / 180);
-  
   for (let i = -1000; i < 1000; i += 180) {
     for (let j = -1000; j < 1000; j += 100) {
       ctx.fillText('OHM SNR', i, j);
@@ -275,7 +248,6 @@ function drawArrow(ctx, x1, y1, x2, y2) {
 }
 
 function drawMeasure(ctx, w, h, x, y, realW, realH, unit) {
-  // วาดกล่อง
   ctx.fillStyle = '#ffb347';
   ctx.fillRect(x, y, w, h);
   ctx.strokeStyle = '#2d3436';
@@ -286,20 +258,17 @@ function drawMeasure(ctx, w, h, x, y, realW, realH, unit) {
   ctx.font = '16px Prompt';
   ctx.textAlign = 'center';
 
-  // เส้นวัดแนวนอน (ด้านล่าง)
   const pad = 40;
   ctx.strokeStyle = '#000';
-  // หัวลูกศร ซ้าย-ขวา
-  drawArrow(ctx, x + w, y + h + pad, x, y + h + pad); // ไปซ้าย
-  drawArrow(ctx, x, y + h + pad, x + w, y + h + pad); // ไปขวา
+  drawArrow(ctx, x + w, y + h + pad, x, y + h + pad); 
+  drawArrow(ctx, x, y + h + pad, x + w, y + h + pad); 
   ctx.fillText(`${realW} ${unit}`, x + w / 2, y + h + pad + 25);
 
-  // เส้นวัดแนวตั้ง (ด้านซ้าย)
   ctx.save();
   ctx.translate(x - pad, y + h / 2);
   ctx.rotate(-Math.PI / 2);
-  drawArrow(ctx, h/2, 0, -h/2, 0); // ไปบน
-  drawArrow(ctx, -h/2, 0, h/2, 0); // ไปล่าง
+  drawArrow(ctx, h/2, 0, -h/2, 0); 
+  drawArrow(ctx, -h/2, 0, h/2, 0); 
   ctx.fillText(`${realH} ${unit}`, 0, -15);
   ctx.restore();
 }
@@ -307,12 +276,12 @@ function drawMeasure(ctx, w, h, x, y, realW, realH, unit) {
 function drawAll() {
   const wIn = +document.getElementById('width').value;
   const hIn = +document.getElementById('height').value;
-  if (!wIn || !hIn) return;
-
   const unitVal = document.getElementById('unit').value;
   const priceVal = +document.getElementById('price').value;
   const shipVal = +document.getElementById('shipping').value || 0;
   const discVal = +document.getElementById('discount').value || 0;
+
+  if (!wIn || !hIn) return;
 
   let optTotal = 0;
   let optLabels = [];
@@ -333,29 +302,25 @@ function drawAll() {
 
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, 600, 780);
+  ctx.fillRect(0, 0, 600, 800);
 
   drawWatermark(ctx);
 
-  // Header
   ctx.fillStyle = '#2d3436';
   ctx.font = 'bold 26px Prompt';
   ctx.textAlign = 'center';
-  ctx.fillText('ใบแจ้งสรุปราคาลูกค้า', 300, 50);
+  ctx.fillText('ใบสรุปราคา/ชิ้น', 300, 50);
   ctx.font = '16px Prompt';
   ctx.fillText(`วัสดุ: ${selectedMaterial}`, 300, 80);
 
-  // Box
   const maxDraw = 250;
   const ratio = maxDraw / Math.max(wM, hM);
-  drawMeasure(ctx, wM*ratio, hM*ratio, (600 - wM*ratio)/2 + 20, 150, wIn, hIn, unitVal);
+  drawMeasure(ctx, wM*ratio, hM*ratio, (600 - wM*ratio)/2 + 20, 140, wIn, hIn, unitVal);
 
-  // Details
   let y = 500;
   ctx.textAlign = 'left';
   ctx.font = '16px Prompt';
   ctx.fillStyle = '#636e72';
-  
   ctx.fillText(`คำนวณพื้นที่: ${area.toFixed(2)} ตร.ม.`, 70, y);
   
   ctx.fillStyle = '#2d3436';
@@ -371,7 +336,7 @@ function drawAll() {
   ctx.textAlign = 'left';
   ctx.fillText(`ค่าจัดส่ง:`, 70, y+105);
   ctx.textAlign = 'right';
-  ctx.fillText(`+ ${shipVal.toLocaleString()} บาท`, 530, y+105);
+  ctx.fillText(shipVal === 0 ? "ฟรี" : `+ ${shipVal.toLocaleString()} บาท`, 530, y+105);
 
   ctx.textAlign = 'left';
   ctx.fillStyle = '#e17055';
@@ -379,7 +344,6 @@ function drawAll() {
   ctx.textAlign = 'right';
   ctx.fillText(`- ${discVal.toLocaleString()} บาท`, 530, y+140);
 
-  // Grand Total
   ctx.fillStyle = '#2d3436';
   ctx.fillRect(50, y+175, 500, 65);
   ctx.fillStyle = '#fff';
@@ -402,3 +366,4 @@ window.onload = drawAll;
 
 </body>
 </html>
+
