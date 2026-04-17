@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.H.Y PRINT PRO - Dynamic Height Version</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Prompt', sans-serif; box-sizing: border-box; }
+        body { margin: 0; background: #f4f7f6; color: #2d3436; padding-bottom: 50px; }
+        
+        .header { 
+            background: #111; color: #ffd700; text-align: center; 
+            padding: 25px; font-weight: 700; font-size: 24px; 
+            border-bottom: 5px solid #ffd700; 
+        }
+        
+        .control-box { 
+            background: #fff; padding: 20px; position: sticky; top: 0; 
+            z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        
+        .upload-section { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+        .upload-slot { 
+            background: #fafafa; border: 2px dashed #dfe6e9; padding: 15px; 
+            border-radius: 12px; width: calc(33.33% - 12px); min-width: 180px; 
+            text-align: center; 
+        }
+        .upload-slot label { font-size: 13px; color: #636e72; display: block; margin-bottom: 5px; }
+        
+        .btn-add { 
+            background: #b2bec3; color: #fff; border: none; padding: 8px 20px; 
+            border-radius: 6px; cursor: pointer; font-weight: 500; margin-bottom: 15px; 
+        }
+        
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .main-btn { 
+            padding: 15px; border: none; color: #fff; border-radius: 10px; 
+            cursor: pointer; font-weight: 700; font-size: 17px; transition: 0.2s; 
+        }
+        .btn-render { background: #00b894; }
+        .btn-save { background: #d63031; }
+        .main-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        #list { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .item { 
+            background: #fff; padding: 15px; border-radius: 15px; 
+            border: 1px solid #eee; position: relative; box-shadow: 0 5px 10px rgba(0,0,0,0.03); 
+        }
+        .item img { width: 100%; height: 90px; object-fit: contain; background: #f1f2f6; border-radius: 8px; margin-bottom: 10px; }
+        .btn-del { 
+            position: absolute; top: 10px; right: 10px; background: #ff7675; 
+            color: white; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; 
+        }
+        
+        .row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+        .row input { 
+            width: 100%; padding: 7px; border: 1.5px solid #eee; 
+            border-radius: 6px; text-align: center; font-size: 14px; 
+        }
+        .unit-select { padding: 7px; border-radius: 6px; border: 1.5px solid #eee; background: #fff; cursor: pointer; }
+
+        /* Canvas Area */
+        .canvas-outer { width: 100%; padding: 30px 0; display: flex; justify-content: center; background: #dfe6e9; }
+        .canvas-wrapper { width: 95%; max-width: 1080px; }
+        canvas { 
+            background: #fff; width: 100%; height: auto; 
+            border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .upload-slot { width: 100%; }
+            .btn-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">ERP PRINT PRO (B.H.Y)</div>
+
+<div class="control-box">
+    <div id="uploadContainer" class="upload-section"></div>
+    <button class="btn-add" onclick="addUploadSlot()">➕ เพิ่มช่องอัพโหลด</button>
+    
+    <div class="btn-group">
+        <button class="main-btn btn-render" onclick="render()">📄 สร้างแผ่นตรวจงาน</button>
+        <button class="main-btn btn-save" onclick="save()">💾 Export รูปภาพ</button>
+    </div>
+</div>
+
+<div id="list"></div>
+
+<div class="canvas-outer">
+    <div class="canvas-wrapper">
+        <canvas id="cv"></canvas>
+    </div>
+</div>
+
+<script>
+let jobs = [];
+const CANVAS_WIDTH = 1080;
+const PREVIEW_WIDTH = 340; // ขยายขนาดภาพเล็กน้อยเพื่อให้สมดุลกับ 2 คอลัมน์
+const FONT_NAME = "Prompt";
+
+window.onload = () => { 
+    for(let i=0; i<3; i++) addUploadSlot(); 
+};
+
+function addUploadSlot() {
+    const container = document.getElementById('uploadContainer');
+    const slot = document.createElement('div');
+    slot.className = 'upload-slot';
+    slot.innerHTML = `<label>อัพโหลดงาน</label><input type="file" accept="image/*" onchange="handleFileSelect(this)">`;
+    container.appendChild(slot);
+}
+
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            jobs.push({ img: e.target.result, w: 10, h: 10, unit: 'cm' });
+            drawInputs();
+            input.value = "";
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeJob(index) {
+    jobs.splice(index, 1);
+    drawInputs();
+}
+
+function drawInputs() {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+    jobs.forEach((j, i) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+            <button class="btn-del" onclick="removeJob(${i})">✕</button>
+            <img src="${j.img}">
+            <b style="font-weight:600">แบบที่ ${i + 1}</b>
+            <div class="row">
+                <input type="number" step="0.1" value="${j.w}" onchange="jobs[${i}].w=this.value">
+                <input type="number" step="0.1" value="${j.h}" onchange="jobs[${i}].h=this.value">
+                <select class="unit-select" onchange="jobs[${i}].unit=this.value">
+                    <option value="cm" ${j.unit==='cm'?'selected':''}>cm</option>
+                    <option value="m" ${j.unit==='m'?'selected':''}>m</option>
+                </select>
+            </div>`;
+        list.appendChild(div);
+    });
+}
+
+function drawArrowLabel(ctx, fx, fy, tx, ty, val, unit) {
+    ctx.strokeStyle = "#e74c3c";
+    ctx.fillStyle = "#e74c3c";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+    
+    const h = 12;
+    const a = Math.atan2(ty - fy, tx - fx);
+    ctx.beginPath(); ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - h * Math.cos(a - Math.PI / 6), ty - h * Math.sin(a - Math.PI / 6));
+    ctx.lineTo(tx - h * Math.cos(a + Math.PI / 6), ty - h * Math.sin(a + Math.PI / 6));
+    ctx.fill();
+
+    ctx.font = `600 18px ${FONT_NAME}`;
+    ctx.textAlign = "center";
+    const txt = val + " " + unit;
+    if(fy === ty) ctx.fillText(txt, (fx+tx)/2, fy - 12);
+    else {
+        ctx.save();
+        ctx.translate((fx+tx)/2 - 18, (fy+ty)/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText(txt, 0, 0);
+        ctx.restore();
+    }
+}
+
+async function render() {
+    if (!jobs.length) return alert("กรุณาอัพโหลดรูปภาพก่อนสร้างแผ่นงาน");
+    
+    // โหลดฟอนต์เพื่อให้พร้อมใช้งานบน Canvas
+    await document.fonts.load(`1em ${FONT_NAME}`);
+
+    const c = document.getElementById("cv");
+    const ctx = c.getContext("2d");
+
+    // --- ส่วนที่ 1: คำนวณตำแหน่งและหาความสูงรวมแบบ Dynamic ---
+    let col1y = 220, col2y = 220; // เริ่มต้นที่ Y = 220
+    let maxDrawY = 0;
+    const loadedImgs = [];
+    const mid = CANVAS_WIDTH / 2;
+
+    for (let i = 0; i < jobs.length; i++) {
+        const img = await new Promise(res => {
+            const o = new Image(); o.onload = () => res(o); o.src = jobs[i].img;
+        });
+        loadedImgs.push(img);
+        
+        const r = img.height / img.width;
+        const dw = PREVIEW_WIDTH, dh = PREVIEW_WIDTH * r;
+        const is2 = i % 2 !== 0;
+        let y = is2 ? col2y : col1y;
+        
+        // คำนวณขอบล่างของรายการนี้
+        let bottomOfThisItem = y + dh + 100; 
+        if (bottomOfThisItem > maxDrawY) maxDrawY = bottomOfThisItem;
+        
+        // เลื่อนตำแหน่ง Y สำหรับรูปถัดไปในคอลัมน์เดิม
+        if (is2) col2y += dh + 200; else col1y += dh + 200;
+    }
+
+    // กำหนดความสูงรวมของแผ่นงาน (ขอบล่างรูปสุดท้าย + พื้นที่กล่องหมายเหตุ)
+    const NOTE_SECTION_HEIGHT = 160;
+    const FINAL_CANVAS_HEIGHT = maxDrawY + NOTE_SECTION_HEIGHT;
+
+    // ตั้งค่าขนาด Canvas จริง
+    c.width = CANVAS_WIDTH;
+    c.height = FINAL_CANVAS_HEIGHT;
+
+    // --- ส่วนที่ 2: เริ่มการวาดจริง ---
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, CANVAS_WIDTH, FINAL_CANVAS_HEIGHT);
+
+    // วาดหัวข้อ
+    ctx.fillStyle = "#2d3436";
+    ctx.font = `700 48px ${FONT_NAME}`;
+    ctx.textAlign = "center";
+    ctx.fillText("ตัวอย่างงานพิมพ์", CANVAS_WIDTH/2, 100);
+
+    // วาดรูปและองค์ประกอบต่างๆ
+    col1y = 220; col2y = 220;
+    for (let i = 0; i < loadedImgs.length; i++) {
+        const j = jobs[i];
+        const img = loadedImgs[i];
+        const r = img.height / img.width;
+        const dw = PREVIEW_WIDTH, dh = PREVIEW_WIDTH * r;
+        const is2 = i % 2 !== 0;
+        let x = is2 ? mid + 100 : 100; // ปรับระยะขอบซ้ายขวา
+        let y = is2 ? col2y : col1y;
+
+        // กรอบเหลือง
+        ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 4;
+        ctx.strokeRect(x - 2, y - 2, dw + 4, dh + 4);
+        ctx.drawImage(img, x, y, dw, dh);
+
+        // ลูกศรบอกขนาด
+        drawArrowLabel(ctx, x, y - 40, x + dw, y - 40, j.w, j.unit);
+        drawArrowLabel(ctx, x - 40, y, x - 40, y + dh, j.h, j.unit);
+
+        // ข้อความกำกับแบบ
+        ctx.fillStyle = "#111"; ctx.font = `600 22px ${FONT_NAME}`; ctx.textAlign = "left";
+        ctx.fillText(`แบบที่ ${i + 1} | ขนาด ${j.w} x ${j.h} ${j.unit}`, x, y + dh + 50);
+
+        if (is2) col2y += dh + 200; else col1y += dh + 200;
+    }
+
+    // ลายน้ำ (Prompt 600) วาดกระจายเต็มพื้นที่ FINAL_CANVAS_HEIGHT
+    ctx.save();
+    ctx.globalAlpha = 0.12; ctx.fillStyle = "#000"; ctx.font = `600 24px ${FONT_NAME}`;
+    for (let lx = -500; lx < CANVAS_WIDTH; lx += 280) {
+        for (let ly = 0; ly < FINAL_CANVAS_HEIGHT; ly += 220) {
+            ctx.save(); ctx.translate(lx, ly); ctx.rotate(-45 * Math.PI / 180);
+            ctx.fillText("B.H.Y PRINTING", 0, 0); ctx.restore();
+        }
+    }
+    ctx.restore();
+
+    // ส่วนหมายเหตุ (วาดต่อท้ายที่ตำแหน่ง Y สุดท้ายที่คำนวณไว้)
+    const ny = maxDrawY;
+    ctx.fillStyle = "#fff5f5"; ctx.strokeStyle = "#ff7675"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.roundRect(80, ny, CANVAS_WIDTH - 160, 110, 15); ctx.fill(); ctx.stroke();
+    
+    ctx.fillStyle = "#000"; ctx.textAlign = "center";
+    ctx.font = `700 22px ${FONT_NAME}`;
+    ctx.fillText("หมายเหตุ : เส้นขอบสีเหลือง และ ลายน้ำไม่ได้พิมพ์ลงไปในแบบ", CANVAS_WIDTH/2, ny + 45);
+    ctx.font = `400 18px ${FONT_NAME}`;
+    ctx.fillText("หากลูกค้าตรวจสอบรายละเอียดเรียบร้อยแล้ว กรุณายืนยันกลับทางแอดมินเพื่อดำเนินการขั้นตอนต่อไปได้เลยครับ", CANVAS_WIDTH/2, ny + 82);
+}
+
+function save() {
+    const c = document.getElementById("cv");
+    const a = document.createElement("a");
+    a.download = `BHY_Review_${Date.now()}.png`;
+    a.href = c.toDataURL("image/png");
+    a.click();
+}
+</script>
+
+</body>
+</html>
