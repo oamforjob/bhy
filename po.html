@@ -8,8 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
     <style>
         :root {
             --primary-blue: #003399;
@@ -19,6 +17,7 @@
             --success-green: #27ae60;
             --danger-red: #e74c3c;
             --save-orange: #f39c12;
+            --draft-red: rgba(255, 0, 0, 0.08); /* ปรับให้อ่อนลง (0.08) */
         }
 
         * { box-sizing: border-box; }
@@ -30,7 +29,6 @@
             padding: 10px; 
         }
 
-        /* Toolbar จัดกลุ่มปุ่มให้สวยงาม */
         .no-print {
             max-width: 210mm;
             margin: 0 auto 10px;
@@ -61,11 +59,9 @@
             transition: 0.2s;
         }
         .btn-print { background: var(--success-green); color: white; }
-        .btn-save-img { background: var(--save-orange); color: white; }
         .btn-clear { background: #4a5568; color: white; }
         
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
 
         .btn-add { background: var(--primary-blue); color: white; margin-top: 15px; }
 
@@ -79,7 +75,6 @@
         .opt { padding: 5px 15px; border-radius: 7px; font-size: 13px; color: #718096; }
         .opt.active { background: white; color: #1a202c; font-weight: 600; }
 
-        /* การตั้งค่าหน้ากระดาษ */
         .page {
             width: 210mm;
             min-height: 297mm;
@@ -93,20 +88,20 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        /* Watermark */
+        /* Watermark สีแดงอ่อนมาก */
         .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
             font-size: 140px;
-            color: rgba(0, 0, 0, 0.04);
+            color: var(--draft-red);
             font-weight: 800;
             white-space: nowrap;
             pointer-events: none;
             display: none;
             z-index: 999;
-            border: 15px solid rgba(0,0,0,0.02);
+            border: 15px solid rgba(255, 0, 0, 0.03); /* ขอบจางลงด้วย */
             padding: 20px;
         }
         .is-draft .watermark { display: block; }
@@ -125,7 +120,6 @@
             }
         }
 
-        /* ส่วนหัวและข้อมูลร้าน */
         .header { 
             display: flex; 
             align-items: center; 
@@ -151,7 +145,6 @@
         .meta-row { display: flex; font-size: 13px; margin-bottom: 5px; }
         .meta-row b { min-width: 45px; }
 
-        /* ข้อมูลลูกค้า */
         .customer-zone {
             display: grid;
             grid-template-columns: 1.5fr 1fr;
@@ -167,7 +160,6 @@
         .editable-input { border-bottom: 1px dashed #cbd5e0; flex-grow: 1; outline: none; min-height: 22px; padding-left: 5px; }
         .editable-input:empty:before { content: attr(data-placeholder); color: var(--placeholder-color); }
 
-        /* ตารางรายการ */
         table { width: 100%; border-collapse: collapse; }
         table th { background: var(--primary-blue); color: white; padding: 12px 8px; font-size: 14px; }
         table td { border-bottom: 1px solid #edf2f7; padding: 12px 8px; font-size: 14px; vertical-align: top; }
@@ -177,7 +169,6 @@
         .col-right { text-align: right; }
         .delete-row { color: var(--danger-red); cursor: pointer; font-weight: bold; }
 
-        /* ส่วนสรุปเงิน */
         .summary-area { display: flex; justify-content: flex-end; margin-top: 20px; }
         .total-table { width: 340px; }
         .total-table td { padding: 6px 12px; border: none; }
@@ -187,14 +178,23 @@
         .v-opt { padding: 2px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; }
         .v-opt.active { background: var(--primary-blue); color: white; }
 
-        /* เงื่อนไขแยกบรรทัด */
         .notes-box { margin-top: 20px; font-size: 13px; color: #4a5568; border: 1px solid #e2e8f0; padding: 15px; line-height: 1.8; background-color: var(--light-grey); border-radius: 6px; }
 
-        /* ลายเซ็น */
-        .signature-area { margin-top: auto; display: flex; justify-content: space-between; padding-top: 30px; text-align: center; }
-        .sig-block { width: 45%; }
-        .sig-line { border-bottom: 1px solid #333; margin: 30px auto 10px; width: 80%; }
+        .signature-area { margin-top: auto; display: flex; justify-content: space-between; padding-top: 30px; text-align: center; transition: all 0.3s; }
+        .sig-block { width: 45%; position: relative; transition: all 0.3s; }
+        .sig-line { border-bottom: 1px solid #333; margin: 30px auto 10px; width: 80%; position: relative; z-index: 2; }
         .sig-input { font-size: 14px; outline: none; border-bottom: 1px dashed #eee; min-width: 180px; display: inline-block; }
+        
+        .signature-image {
+            display: none;
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-height: 60px;
+            width: auto;
+            z-index: 1;
+        }
     </style>
 </head>
 <body onload="initApp()">
@@ -208,7 +208,6 @@
             </div>
         </div>
         <div class="action-group">
-            <button id="btnSaveImg" class="btn btn-save-img" onclick="saveAsImage()"><span>บันทึกรูปภาพ</span></button>
             <button class="btn btn-print" onclick="window.print()"><span>พิมพ์ / PDF</span></button>
             <button class="btn btn-clear" onclick="clearHistory()"><span>รีเซ็ต</span></button>
         </div>
@@ -261,8 +260,8 @@
                     <td class="no-print col-center"><span class="delete-row" onclick="removeRow(this)">×</span></td>
                     <td class="col-center">1</td>
                     <td contenteditable="true" class="editable-input" data-placeholder="รายละเอียดงานพิมพ์..."></td>
-                    <td class="col-center qty" contenteditable="true" oninput="calc()">0</td>
-                    <td class="col-right price" contenteditable="true" oninput="calc()">0.00</td>
+                    <td class="col-center qty" contenteditable="true" oninput="calc()"></td>
+                    <td class="col-right price" contenteditable="true" oninput="calc()"></td>
                     <td class="col-right row-total">0.00</td>
                 </tr>
             </tbody>
@@ -294,18 +293,19 @@
             • กรณีสินค้าได้รับไม่ถูกต้อง ผู้ซื้อต้องแจ้งให้ทราบภายใน 7 วัน
         </div>
 
-        <div class="signature-area">
-            <div class="sig-block">
+        <div class="signature-area" id="sig-container">
+            <div class="sig-block" id="approver-block">
                 <p>ผู้อนุมัติสั่งซื้อ</p>
                 <div class="sig-line"></div>
                 ( <div class="sig-input" contenteditable="true" data-placeholder="ชื่อ-นามสกุล"></div> )
                 <p style="font-size: 12px; margin-top: 10px;">วันที่ ________/________/________</p>
             </div>
-            <div class="sig-block">
-                <p>ผู้เสนอราคา</p>
+            <div class="sig-block" id="drafter-block">
+                <p><b id="sig-title">ผู้เสนอราคา</b></p>
+                <img src="https://drive.google.com/thumbnail?id=1LpDb5IALTMouQOukaOg9_IKzu8J8_iis&sz=w500" alt="Signature" id="sig-img" class="signature-image">
                 <div class="sig-line"></div>
-                ( <div class="sig-input" contenteditable="true">นางสาววิไลภรณ์ คำใจ</div> )
-                <p style="font-size: 12px; margin-top: 5px; color: #666;">B.H.Y การพิมพ์</p>
+                ( <div class="sig-input" contenteditable="true" id="sig-name">นางสาววิไลภรณ์ คำใจ</div> )
+                <p style="font-size: 12px; margin-top: 5px; color: #666;" id="sig-dept">B.H.Y การพิมพ์</p>
             </div>
         </div>
     </div>
@@ -314,7 +314,7 @@
         let isVatEnabled = false; 
         let isDraftMode = true;   
 
-        function initApp() { loadH(); calc(); }
+        function initApp() { loadH(); calc(); updateSignature(); }
 
         function toggleMode() {
             isDraftMode = !isDraftMode;
@@ -322,6 +322,38 @@
             document.getElementById('m_final').classList.toggle('active');
             const page = document.getElementById('doc-page');
             isDraftMode ? page.classList.add('is-draft') : page.classList.remove('is-draft');
+            
+            updateSignature();
+        }
+
+        function updateSignature() {
+            const titleEl = document.getElementById('sig-title');
+            const nameEl = document.getElementById('sig-name');
+            const imgEl = document.getElementById('sig-img');
+            const deptEl = document.getElementById('sig-dept');
+            const approverBlock = document.getElementById('approver-block');
+            const drafterBlock = document.getElementById('drafter-block');
+            const sigContainer = document.getElementById('sig-container');
+
+            if (isDraftMode) {
+                titleEl.innerText = "ผู้ร่าง";
+                nameEl.innerText = "นายศักดิ์นรินทร์ คำใจ";
+                imgEl.style.display = "block";
+                deptEl.innerText = "ผู้ร่างใบเสนอราคา";
+                
+                approverBlock.style.display = "none"; 
+                drafterBlock.style.width = "100%";
+                sigContainer.style.justifyContent = "center";
+            } else {
+                titleEl.innerText = "ผู้เสนอราคา";
+                nameEl.innerText = "นางสาววิไลภรณ์ คำใจ";
+                imgEl.style.display = "none";
+                deptEl.innerText = "B.H.Y การพิมพ์";
+                
+                approverBlock.style.display = "block";
+                drafterBlock.style.width = "45%";
+                sigContainer.style.justifyContent = "space-between";
+            }
         }
 
         function toggleVat() {
@@ -340,8 +372,8 @@
                 <td class="no-print col-center"><span class="delete-row" onclick="removeRow(this)">×</span></td>
                 <td class="col-center">${rowCount}</td>
                 <td contenteditable="true" class="editable-input"></td>
-                <td class="col-center qty" contenteditable="true" oninput="calc()">0</td>
-                <td class="col-right price" contenteditable="true" oninput="calc()">0.00</td>
+                <td class="col-center qty" contenteditable="true" oninput="calc()"></td>
+                <td class="col-right price" contenteditable="true" oninput="calc()"></td>
                 <td class="col-right row-total">0.00</td>
             `;
             tbody.appendChild(tr);
@@ -370,32 +402,6 @@
             document.getElementById('subt').innerText = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
             document.getElementById('v_amt').innerText = vAmt.toLocaleString('th-TH', {minimumFractionDigits: 2});
             document.getElementById('gtot').innerText = grand.toLocaleString('th-TH', {minimumFractionDigits: 2});
-        }
-
-        // ฟังก์ชันบันทึกเป็นรูปภาพ
-        function saveAsImage() {
-            const page = document.getElementById('doc-page');
-            const btn = document.getElementById('btnSaveImg');
-            
-            btn.disabled = true;
-            btn.innerText = "กำลังสร้างรูป...";
-
-            // ใช้ html2canvas แปลง div เป็น canvas
-            html2canvas(page, {
-                scale: 3, // เพิ่มความชัด 3 เท่า
-                useCORS: true,
-                logging: false,
-                backgroundColor: "#ffffff"
-            }).then(canvas => {
-                const link = document.createElement('a');
-                const date = new Date().toISOString().slice(0,10);
-                link.download = `Quotation_BHY_${date}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                btn.disabled = false;
-                btn.innerText = "บันทึกรูปภาพ";
-            });
         }
 
         function saveH() {
@@ -428,3 +434,4 @@
     </script>
 </body>
 </html>
+
