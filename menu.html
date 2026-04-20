@@ -3,66 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B.H.Y การพิมพ์ - เมนูหลัก</title>
+    <title>B.H.Y การพิมพ์ - ระบบจัดการข้อมูล</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-        }
-
         body {
             font-family: 'Sarabun', sans-serif;
-            background-color: #f8f9fa; /* สีเทาอ่อนเรียบหรู */
+            background-color: #f0f2f5;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            color: #333;
+            color: #2c3e50;
         }
 
         .container {
             background-color: #ffffff;
-            padding: 40px;
-            border-radius: 8px; /* โค้งมนเล็กน้อยพองาม */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); /* เงาบางๆ ให้ดูมีมิติ */
+            padding: 50px 40px;
+            border-radius: 4px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
             text-align: center;
-            border-top: 6px solid #1a3a5f; /* เส้นขอบด้านบนสีน้ำเงินเข้ม */
+            border-top: 8px solid #003366; /* สีน้ำเงินกรมท่าแบบองค์กร */
         }
 
-        /* --- ส่วนหัว --- */
         .header {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .logo {
-            width: 100px;
+            width: 110px;
             height: auto;
-            margin-bottom: 15px;
-            /* ปรับแต่งภาพเล็กน้อยให้คมชัด */
+            margin-bottom: 20px;
         }
 
         .company-name {
-            font-size: 1.6rem;
+            font-size: 1.7rem;
             font-weight: 700;
-            color: #1a3a5f;
+            color: #003366;
             margin: 0;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         .divider {
-            height: 2px;
-            width: 50px;
-            background-color: #d4af37; /* สีทองเสริมความหรูหรา */
-            margin: 15px auto;
+            height: 3px;
+            width: 60px;
+            background-color: #c5a059; /* สีทองหม่นเพิ่มความพรีเมียม */
+            margin: 20px auto;
         }
 
-        /* --- ส่วนเมนู --- */
         .menu-list {
             list-style: none;
             padding: 0;
@@ -70,7 +62,7 @@
         }
 
         .menu-item {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .menu-link {
@@ -78,45 +70,45 @@
             align-items: center;
             justify-content: space-between;
             text-decoration: none;
-            color: #1a3a5f;
-            background-color: #fff;
-            padding: 16px 25px;
+            color: #333;
+            background-color: #fafafa;
+            padding: 18px 25px;
             font-size: 1.1rem;
             border: 1px solid #e0e0e0;
             border-radius: 4px;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.3s ease;
         }
 
         .menu-link:hover {
-            background-color: #1a3a5f;
+            background-color: #003366;
             color: #ffffff;
-            border-color: #1a3a5f;
-            transform: translateX(5px); /* เลื่อนขวาเล็กน้อยเมื่อชี้ */
+            border-color: #003366;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
         }
 
-        .arrow-icon {
+        .arrow {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-link:hover .arrow {
+            transform: translateX(5px);
+        }
+
+        .footer-info {
+            margin-top: 40px;
             font-size: 0.8rem;
-            opacity: 0.5;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-
-        .menu-link:hover .arrow-icon {
-            opacity: 1;
-        }
-
-        /* Footer เล็กๆ */
-        .footer-text {
-            margin-top: 30px;
-            font-size: 0.85rem;
-            color: #999;
-        }
-
     </style>
 </head>
 <body>
 
     <div class="container">
         <header class="header">
-            <img src="https://lh3.googleusercontent.com/d/14QglsWS86uC_r5ZWYLPbx9Vt7fDE7n5D" alt="Logo" class="logo">
+            <img src="https://lh3.googleusercontent.com/d/14QglsWS86uC_r5ZWYLPbx9Vt7fDE7n5D" alt="B.H.Y Logo" class="logo">
             <h1 class="company-name">B.H.Y การพิมพ์</h1>
             <div class="divider"></div>
         </header>
@@ -124,27 +116,29 @@
         <nav>
             <ul class="menu-list">
                 <li class="menu-item">
-                    <a href="https://github.com/oamforjob/bhy/po.html" class="menu-link" target="_self">
+                    <a href="https://oamforjob.github.io/bhy/po.html" class="menu-link" target="_self">
                         <span>ใบสั่งซื้อสินค้า (PO)</span>
-                        <span class="arrow-icon">▶</span>
+                        <span class="arrow">▶</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="https://github.com/oamforjob/bhy/model.html" class="menu-link" target="_self">
+                    <a href="https://oamforjob.github.io/bhy/model.html" class="menu-link" target="_self">
                         <span>รูปแบบผลิตภัณฑ์ (Model)</span>
-                        <span class="arrow-icon">▶</span>
+                        <span class="arrow">▶</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="https://github.com/oamforjob/bhy/price.html" class="menu-link" target="_self">
-                        <span>รายการอัตราค่าบริการ (Price)</span>
-                        <span class="arrow-icon">▶</span>
+                    <a href="https://oamforjob.github.io/bhy/price.html" class="menu-link" target="_self">
+                        <span>ข้อมูลราคา (Price)</span>
+                        <span class="arrow">▶</span>
                     </a>
                 </li>
             </ul>
         </nav>
 
-        <p class="footer-text">© 2026 B.H.Y Printing Services</p>
+        <footer class="footer-info">
+            © 2026 B.H.Y Printing Services
+        </footer>
     </div>
 
 </body>
