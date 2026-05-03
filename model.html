@@ -64,7 +64,6 @@
         }
         .unit-select { padding: 7px; border-radius: 6px; border: 1.5px solid #eee; background: #fff; cursor: pointer; }
 
-        /* Canvas Area */
         .canvas-outer { width: 100%; padding: 30px 0; display: flex; justify-content: center; background: #dfe6e9; }
         .canvas-wrapper { width: 95%; max-width: 1080px; }
         canvas { 
@@ -104,7 +103,7 @@
 <script>
 let jobs = [];
 const CANVAS_WIDTH = 1080;
-const PREVIEW_WIDTH = 340; // ขยายขนาดภาพเล็กน้อยเพื่อให้สมดุลกับ 2 คอลัมน์
+const PREVIEW_WIDTH = 340;
 const FONT_NAME = "Prompt";
 
 window.onload = () => { 
@@ -186,15 +185,18 @@ function drawArrowLabel(ctx, fx, fy, tx, ty, val, unit) {
 
 async function render() {
     if (!jobs.length) return alert("กรุณาอัพโหลดรูปภาพก่อนสร้างแผ่นงาน");
-    
-    // โหลดฟอนต์เพื่อให้พร้อมใช้งานบน Canvas
+
     await document.fonts.load(`1em ${FONT_NAME}`);
+
+    const SCALE = 3; // ⭐ เพิ่มความคม
 
     const c = document.getElementById("cv");
     const ctx = c.getContext("2d");
 
-    // --- ส่วนที่ 1: คำนวณตำแหน่งและหาความสูงรวมแบบ Dynamic ---
-    let col1y = 220, col2y = 220; // เริ่มต้นที่ Y = 220
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    let col1y = 220, col2y = 220;
     let maxDrawY = 0;
     const loadedImgs = [];
     const mid = CANVAS_WIDTH / 2;
@@ -210,60 +212,56 @@ async function render() {
         const is2 = i % 2 !== 0;
         let y = is2 ? col2y : col1y;
         
-        // คำนวณขอบล่างของรายการนี้
         let bottomOfThisItem = y + dh + 100; 
         if (bottomOfThisItem > maxDrawY) maxDrawY = bottomOfThisItem;
         
-        // เลื่อนตำแหน่ง Y สำหรับรูปถัดไปในคอลัมน์เดิม
         if (is2) col2y += dh + 200; else col1y += dh + 200;
     }
 
-    // กำหนดความสูงรวมของแผ่นงาน (ขอบล่างรูปสุดท้าย + พื้นที่กล่องหมายเหตุ)
     const NOTE_SECTION_HEIGHT = 160;
     const FINAL_CANVAS_HEIGHT = maxDrawY + NOTE_SECTION_HEIGHT;
 
-    // ตั้งค่าขนาด Canvas จริง
-    c.width = CANVAS_WIDTH;
-    c.height = FINAL_CANVAS_HEIGHT;
+    // ⭐ จุดสำคัญ (เพิ่มความละเอียด)
+    c.width = CANVAS_WIDTH * SCALE;
+    c.height = FINAL_CANVAS_HEIGHT * SCALE;
 
-    // --- ส่วนที่ 2: เริ่มการวาดจริง ---
+    c.style.width = CANVAS_WIDTH + "px";
+    c.style.height = FINAL_CANVAS_HEIGHT + "px";
+
+    ctx.scale(SCALE, SCALE);
+
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, CANVAS_WIDTH, FINAL_CANVAS_HEIGHT);
 
-    // วาดหัวข้อ
     ctx.fillStyle = "#2d3436";
     ctx.font = `700 48px ${FONT_NAME}`;
     ctx.textAlign = "center";
     ctx.fillText("ตัวอย่างงานพิมพ์", CANVAS_WIDTH/2, 100);
 
-    // วาดรูปและองค์ประกอบต่างๆ
     col1y = 220; col2y = 220;
+
     for (let i = 0; i < loadedImgs.length; i++) {
         const j = jobs[i];
         const img = loadedImgs[i];
         const r = img.height / img.width;
         const dw = PREVIEW_WIDTH, dh = PREVIEW_WIDTH * r;
         const is2 = i % 2 !== 0;
-        let x = is2 ? mid + 100 : 100; // ปรับระยะขอบซ้ายขวา
+        let x = is2 ? mid + 100 : 100;
         let y = is2 ? col2y : col1y;
 
-        // กรอบเหลือง
         ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 4;
         ctx.strokeRect(x - 2, y - 2, dw + 4, dh + 4);
         ctx.drawImage(img, x, y, dw, dh);
 
-        // ลูกศรบอกขนาด
         drawArrowLabel(ctx, x, y - 40, x + dw, y - 40, j.w, j.unit);
         drawArrowLabel(ctx, x - 40, y, x - 40, y + dh, j.h, j.unit);
 
-        // ข้อความกำกับแบบ
         ctx.fillStyle = "#111"; ctx.font = `600 22px ${FONT_NAME}`; ctx.textAlign = "left";
         ctx.fillText(`แบบที่ ${i + 1} | ขนาด ${j.w} x ${j.h} ${j.unit}`, x, y + dh + 50);
 
         if (is2) col2y += dh + 200; else col1y += dh + 200;
     }
 
-    // ลายน้ำ (Prompt 600) วาดกระจายเต็มพื้นที่ FINAL_CANVAS_HEIGHT
     ctx.save();
     ctx.globalAlpha = 0.12; ctx.fillStyle = "#000"; ctx.font = `600 24px ${FONT_NAME}`;
     for (let lx = -500; lx < CANVAS_WIDTH; lx += 280) {
@@ -274,7 +272,6 @@ async function render() {
     }
     ctx.restore();
 
-    // ส่วนหมายเหตุ (วาดต่อท้ายที่ตำแหน่ง Y สุดท้ายที่คำนวณไว้)
     const ny = maxDrawY;
     ctx.fillStyle = "#fff5f5"; ctx.strokeStyle = "#ff7675"; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.roundRect(80, ny, CANVAS_WIDTH - 160, 110, 15); ctx.fill(); ctx.stroke();
